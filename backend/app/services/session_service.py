@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
 from supabase import create_client
 from app.config import settings
@@ -59,7 +59,7 @@ def end_session(
         session_data = session.data
 
         started_at = datetime.fromisoformat(session_data["started_at"].replace("Z", "+00:00"))
-        ended_at = datetime.utcnow()
+        ended_at = datetime.now(timezone.utc)
         duration = int((ended_at - started_at).total_seconds() / 60)
 
         # Get quiz results for this session

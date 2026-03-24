@@ -19,7 +19,7 @@ class WellbeingCheckinRequest(BaseModel):
     energy_level: str = Field(..., pattern="^(high|medium|low)$")
 
 
-@router.post("/api/sessions/{session_id}/checkin")
+@router.post("/sessions/{session_id}/checkin")
 async def create_wellbeing_checkin(
     session_id: str,
     data: WellbeingCheckinRequest,
@@ -30,7 +30,7 @@ async def create_wellbeing_checkin(
         user_id = await get_current_user_id(authorization)
 
         # Build session context from the session record
-        session_result = supabase.table("sessions").select("*").eq(
+        session_result = supabase.table("study_sessions").select("*").eq(
             "id", session_id
         ).single().execute()
 
@@ -61,23 +61,25 @@ async def create_wellbeing_checkin(
                 "suggest_break": False,
             }
 
-        # Store the check-in record
+        # Store the check-in record (match actual DB schema)
         checkin_record = {
             "user_id": user_id,
             "session_id": session_id,
             "mood": data.mood,
             "energy_level": data.energy_level,
-            "recommendation": recommendation.get("recommendation", ""),
-            "session_type": recommendation.get("session_type", "full_session"),
-            "reduce_difficulty": recommendation.get("reduce_difficulty", False),
-            "suggest_break": recommendation.get("suggest_break", False),
-            "checked_in_at": datetime.utcnow().isoformat(),
+            "adaptation_made": recommendation.get("recommendation", ""),
         }
 
         supabase.table("wellbeing_checkins").insert(checkin_record).execute()
 
         return {
-            "checkin": checkin_record,
+            "checkin": {
+                **checkin_record,
+                "recommendation": recommendation.get("recommendation", ""),
+                "session_type": recommendation.get("session_type", "full_session"),
+                "reduce_difficulty": recommendation.get("reduce_difficulty", False),
+                "suggest_break": recommendation.get("suggest_break", False),
+            },
             "adaptation": recommendation,
         }
     except HTTPException:
@@ -87,7 +89,7 @@ async def create_wellbeing_checkin(
         raise HTTPException(status_code=500, detail="Failed to process wellbeing check-in")
 
 
-@router.get("/api/users/wellbeing/history")
+@router.get("/users/wellbeing/history")
 async def get_wellbeing_history(authorization: str = Header(...)):
     """Get the current user's wellbeing check-in history."""
     try:

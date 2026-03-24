@@ -96,7 +96,7 @@ function ProjectDashboard() {
   const handleStartSession = async () => {
     try {
       const session = await startSession(projectId, todayPlanDay?.id);
-      router.push(`/project/${projectId}/session/${session.id}`);
+      router.push(`/session/${session.id}`);
     } catch (error) {
       console.error('Failed to start session:', error);
     }

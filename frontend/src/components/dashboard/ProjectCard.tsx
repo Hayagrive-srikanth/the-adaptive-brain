@@ -1,10 +1,12 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
-import { Calendar, CheckCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Calendar, CheckCircle, Trash2, X } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import ProgressBar from '@/components/ui/ProgressBar';
+import { useProjectStore } from '@/stores/projectStore';
 import type { Project } from '@/types';
 
 interface ProjectCardProps {
@@ -40,9 +42,38 @@ function getReadinessColor(score: number): string {
 }
 
 export default function ProjectCard({ project }: ProjectCardProps) {
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const deleteProject = useProjectStore((s) => s.deleteProject);
+
   const daysRemaining = getDaysRemaining(project.examDate);
   const readiness = project.readinessScore ?? 0;
   const isCompleted = project.status === 'completed';
+
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowConfirm(true);
+  };
+
+  const confirmDelete = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDeleting(true);
+    try {
+      await deleteProject(project.id);
+    } catch (err) {
+      console.error('Failed to delete:', err);
+      setDeleting(false);
+      setShowConfirm(false);
+    }
+  };
+
+  const cancelDelete = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowConfirm(false);
+  };
 
   return (
     <Link href={`/project/${project.id}`}>
@@ -51,9 +82,18 @@ export default function ProjectCard({ project }: ProjectCardProps) {
         transition={{ type: 'spring', stiffness: 300, damping: 20 }}
       >
         <Card className="relative p-5 bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow cursor-pointer border border-gray-100">
+          {/* Delete button */}
+          <button
+            onClick={handleDelete}
+            className="absolute top-3 right-3 p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors z-10"
+            title="Delete project"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+
           {/* Completed badge */}
           {isCompleted && (
-            <div className="absolute top-3 right-3 flex items-center gap-1 bg-green-100 text-green-700 text-xs font-semibold px-2.5 py-1 rounded-full">
+            <div className="absolute top-3 right-12 flex items-center gap-1 bg-green-100 text-green-700 text-xs font-semibold px-2.5 py-1 rounded-full">
               <CheckCircle className="w-3.5 h-3.5" />
               Completed
             </div>
@@ -101,6 +141,39 @@ export default function ProjectCard({ project }: ProjectCardProps) {
               color={getReadinessColor(readiness)}
             />
           </div>
+
+          {/* Delete confirmation overlay */}
+          <AnimatePresence>
+            {showConfirm && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 bg-white/95 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center gap-3 z-20"
+                onClick={(e) => e.preventDefault()}
+              >
+                <p className="text-sm font-semibold text-gray-800">Delete this project?</p>
+                <p className="text-xs text-gray-500 px-6 text-center">
+                  This will archive &ldquo;{project.name}&rdquo; and remove it from your dashboard.
+                </p>
+                <div className="flex gap-2 mt-1">
+                  <button
+                    onClick={confirmDelete}
+                    disabled={deleting}
+                    className="px-4 py-2 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-xl transition-colors disabled:opacity-50"
+                  >
+                    {deleting ? 'Deleting...' : 'Delete'}
+                  </button>
+                  <button
+                    onClick={cancelDelete}
+                    className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </Card>
       </motion.div>
     </Link>

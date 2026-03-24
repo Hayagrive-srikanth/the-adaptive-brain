@@ -29,7 +29,7 @@ function SummaryContent({
       transition={{ duration: 0.4, delay: index * 0.08 }}
       className="space-y-6"
     >
-      {block.sections?.map((section, sIdx) => (
+      {(block.content_body?.sections || block.sections)?.map((section, sIdx) => (
         <div key={sIdx} className="space-y-3">
           {section.heading && (
             <h3 className="text-xl font-semibold text-gray-900">
@@ -93,7 +93,7 @@ function MicroLessonContent({
   onDone: () => void;
 }) {
   const [currentStep, setCurrentStep] = useState(0);
-  const steps = block.steps ?? [];
+  const steps = (block.content_body?.steps || block.steps) ?? [];
   const total = steps.length;
   const isLast = currentStep >= total - 1;
 

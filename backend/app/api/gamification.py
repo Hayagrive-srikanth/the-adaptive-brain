@@ -9,7 +9,7 @@ from app.services.gamification_service import (
 from supabase import create_client
 from app.config import settings
 
-router = APIRouter(prefix="/api/gamification", tags=["gamification"])
+router = APIRouter()
 supabase = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_ROLE_KEY)
 
 

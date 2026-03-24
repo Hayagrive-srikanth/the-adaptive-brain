@@ -11,7 +11,7 @@ import { ContentBlock, QuizQuestion, SessionWrapUp as SessionWrapUpType } from '
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import ProgressBar from '@/components/ui/ProgressBar';
-import Loader from '@/components/ui/Loader';
+import { Spinner } from '@/components/ui/Loader';
 import ContentDisplay from '@/components/session/ContentDisplay';
 import QuizInterface from '@/components/session/QuizInterface';
 import SessionWrapUpComponent from '@/components/session/SessionWrapUp';
@@ -56,12 +56,13 @@ export default function StudySessionPage() {
   const [breakDismissed, setBreakDismissed] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Fetch session on mount
+  // Fetch session on mount only
   useEffect(() => {
     if (sessionId) {
       fetchSession(sessionId);
     }
-  }, [sessionId, fetchSession]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId]);
 
   // Get user attention span for break reminders
   const profile = useProfileStore((s) => s.profile);
@@ -189,7 +190,7 @@ export default function StudySessionPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#F8F9FA] flex items-center justify-center">
-        <Loader />
+        <Spinner />
       </div>
     );
   }

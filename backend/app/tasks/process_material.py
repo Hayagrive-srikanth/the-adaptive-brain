@@ -37,19 +37,26 @@ def process_material(self, material_id: str):
         file_type = material["file_type"]
         ext = file_type if file_type not in ("image",) else "png"
 
+        logger.info(f"[DEBUG] Material {material_id}: storage_path={storage_path}, file_type={file_type}")
+
         # Use a fixed temp path instead of NamedTemporaryFile to avoid Windows locking
         tmp_dir = tempfile.gettempdir()
         tmp_path = os.path.join(tmp_dir, f"adaptive_brain_{material_id}.{ext}")
 
         file_data = supabase.storage.from_("materials").download(storage_path)
+        logger.info(f"[DEBUG] Material {material_id}: downloaded {len(file_data)} bytes to {tmp_path}")
         with open(tmp_path, "wb") as f:
             f.write(file_data)
 
         # 4. Run OCR/text extraction
+        logger.info(f"[DEBUG] Material {material_id}: starting text extraction for file_type={file_type}")
         ocr_text = process_document(tmp_path, file_type)
+        logger.info(f"[DEBUG] Material {material_id}: extracted text length = {len(ocr_text)} chars")
+        logger.info(f"[DEBUG] Material {material_id}: first 500 chars of extracted text:\n{ocr_text[:500]}")
 
         # 5. Get page count
         page_count = get_page_count(tmp_path, file_type)
+        logger.info(f"[DEBUG] Material {material_id}: page_count={page_count}")
 
         # 6. Generate embedding
         embedding = None

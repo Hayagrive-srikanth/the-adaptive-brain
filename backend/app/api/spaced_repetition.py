@@ -18,7 +18,7 @@ class ReviewAttemptRequest(BaseModel):
     quality_score: int = Field(..., ge=0, le=5)
 
 
-@router.get("/api/reviews/due")
+@router.get("/reviews/due")
 async def get_due_reviews(authorization: str = Header(...)):
     """Get all cards due for review today, with joined question data."""
     try:
@@ -36,7 +36,7 @@ async def get_due_reviews(authorization: str = Header(...)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/api/reviews/attempt")
+@router.post("/reviews/attempt")
 async def submit_review_attempt(
     data: ReviewAttemptRequest,
     authorization: str = Header(...),
@@ -98,7 +98,7 @@ async def submit_review_attempt(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/api/reviews/stats")
+@router.get("/reviews/stats")
 async def get_review_stats(authorization: str = Header(...)):
     """
     Get spaced repetition statistics for the authenticated user.

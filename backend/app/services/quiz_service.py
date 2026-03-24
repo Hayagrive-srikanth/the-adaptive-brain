@@ -74,9 +74,33 @@ def evaluate_answer(question_id: str, user_answer: str) -> Dict[str, Any]:
         question_type = q.get("question_type", "")
         correct_answer = q.get("correct_answer", "")
 
-        # For MCQ and true/false, do exact match
+        # For MCQ and true/false, match by key, value, or text
         if question_type in ("multiple_choice", "true_false"):
-            is_correct = user_answer.strip().lower() == correct_answer.strip().lower()
+            user_ans = user_answer.strip().lower()
+            correct_ans = correct_answer.strip().lower()
+
+            # Direct match (e.g., "B" == "B" or full text match)
+            is_correct = user_ans == correct_ans
+
+            # If correct_answer is a key like "B", check if user sent the option text
+            if not is_correct:
+                options = q.get("options", {})
+                if isinstance(options, dict):
+                    # correct_answer is a key like "B" — check if user_answer matches that option's value
+                    correct_value = options.get(correct_answer, "").strip().lower()
+                    is_correct = user_ans == correct_value
+                    # Also check if user sent a key and correct_answer is a value
+                    for key, val in options.items():
+                        if user_ans == val.strip().lower() and key.strip().lower() == correct_ans:
+                            is_correct = True
+                            break
+                elif isinstance(options, list):
+                    # correct_answer might be an index or the actual text
+                    for opt in options:
+                        if opt.strip().lower() == user_ans and opt.strip().lower() == correct_ans:
+                            is_correct = True
+                            break
+
             explanation = q.get("explanation", "")
         else:
             # For fill-in-blank and short answer, use Claude for semantic evaluation

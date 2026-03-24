@@ -5,7 +5,11 @@
       "Bash(npm install:*)",
       "WebSearch",
       "Bash(gh repo:*)",
-      "Bash(where gh:*)"
+      "Bash(where gh:*)",
+      "Bash(npx jest:*)",
+      "Bash(findstr \"setupFilesAfterSetup\")",
+      "Bash(node -e \"const j = require\\(''jest-config''\\); console.log\\(Object.keys\\(j.defaults\\).filter\\(k => k.toLowerCase\\(\\).includes\\(''setup''\\)\\)\\)\")",
+      "Bash(findstr \"setup\")"
     ]
   }
 }

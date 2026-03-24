@@ -10,6 +10,7 @@ class Settings:
     ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "")
     REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
     HUNYUAN_OCR_PATH: str = os.getenv("HUNYUAN_OCR_PATH", "")
+    OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
     DEEPGRAM_API_KEY: str = os.getenv("DEEPGRAM_API_KEY", "")
     FRONTEND_URL: str = os.getenv("FRONTEND_URL", "http://localhost:3000")
 

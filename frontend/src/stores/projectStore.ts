@@ -17,6 +17,7 @@ interface ProjectState {
   fetchTopics: (projectId: string) => Promise<void>;
   generateTopics: (projectId: string) => Promise<void>;
   fetchPlan: (projectId: string) => Promise<void>;
+  deleteProject: (projectId: string) => Promise<void>;
 }
 
 export const useProjectStore = create<ProjectState>((set) => ({
@@ -106,6 +107,19 @@ export const useProjectStore = create<ProjectState>((set) => ({
       set({ studyPlan: plan });
     } catch (error) {
       console.error('Fetch plan error:', error);
+    }
+  },
+
+  deleteProject: async (projectId) => {
+    try {
+      await projectsApi.archive(projectId);
+      set((state) => ({
+        projects: state.projects.filter((p) => p.id !== projectId),
+        currentProject: state.currentProject?.id === projectId ? null : state.currentProject,
+      }));
+    } catch (error) {
+      console.error('Delete project error:', error);
+      throw error;
     }
   },
 }));

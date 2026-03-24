@@ -16,7 +16,7 @@ function getNodeState(topic: Topic, allTopics: Topic[]): NodeState {
   if (topic.status === 'in_progress') return 'in_progress';
 
   // Check if prerequisites are met
-  const prerequisitesMet = topic.prerequisite_ids.every((preId) => {
+  const prerequisitesMet = (topic.prerequisite_ids || []).every((preId) => {
     const preTopic = allTopics.find((t) => t.id === preId);
     return preTopic?.status === 'mastered';
   });

@@ -38,16 +38,24 @@ def generate_study_plan(self, project_id: str):
         ).eq("processing_status", "completed").execute()
 
         if not materials.data:
-            logger.warning(f"No completed materials for project {project_id}")
+            logger.warning(f"[DEBUG] No completed materials for project {project_id}")
             return
+
+        logger.info(f"[DEBUG] Found {len(materials.data)} completed materials for project {project_id}")
+        for m in materials.data:
+            ocr_len = len(m.get("ocr_text", "") or "")
+            logger.info(f"[DEBUG]   Material {m['id']}: file_type={m.get('file_type')}, ocr_text length={ocr_len}")
 
         # 4. Combine all OCR text
         combined_text = "\n\n".join(
             m["ocr_text"] for m in materials.data if m.get("ocr_text")
         )
 
+        logger.info(f"[DEBUG] Combined text length: {len(combined_text)} chars")
+        logger.info(f"[DEBUG] Combined text first 500 chars:\n{combined_text[:500]}")
+
         if not combined_text.strip():
-            logger.warning(f"No text extracted from materials for project {project_id}")
+            logger.warning(f"[DEBUG] No text extracted from materials for project {project_id}")
             return
 
         # 5. Extract topics using AI
@@ -56,8 +64,16 @@ def generate_study_plan(self, project_id: str):
             material_metadata=f"Project: {project_data['name']}, Comfort: {project_data.get('comfort_level', 'intermediate')}",
         )
 
+        logger.info(f"[DEBUG] Sending to Claude Opus. System prompt length: {len(system_prompt)}, User message length: {len(user_message)}")
+        logger.info(f"[DEBUG] User message first 500 chars:\n{user_message[:500]}")
+
         response = call_opus(system_prompt, user_message, max_tokens=8192)
+        logger.info(f"[DEBUG] Claude Opus raw response length: {len(response)} chars")
+        logger.info(f"[DEBUG] Claude Opus raw response first 1000 chars:\n{response[:1000]}")
+
         topics_data = parse_json_response(response)
+        logger.info(f"[DEBUG] Parsed topics_data type: {type(topics_data)}")
+        logger.info(f"[DEBUG] Parsed topics_data: {str(topics_data)[:1000]}")
 
         if isinstance(topics_data, dict):
             topics_list = topics_data.get("topics", [])
@@ -66,8 +82,10 @@ def generate_study_plan(self, project_id: str):
         else:
             topics_list = []
 
+        logger.info(f"[DEBUG] Extracted {len(topics_list)} topics")
+
         if not topics_list:
-            logger.error("No topics extracted from materials")
+            logger.error("[DEBUG] No topics extracted from materials - topics_list is empty!")
             return
 
         # 6. Store topics in database

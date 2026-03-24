@@ -16,6 +16,14 @@ interface QuizInterfaceProps {
   onComplete: (results: { correct: number; total: number }) => void;
 }
 
+/** Normalize options — API may return an object {A: "...", B: "..."} or an array */
+function getOptionsArray(options: any): string[] {
+  if (!options) return [];
+  if (Array.isArray(options)) return options;
+  if (typeof options === 'object') return Object.values(options);
+  return [];
+}
+
 export default function QuizInterface({
   questions,
   sessionId,
@@ -63,11 +71,17 @@ export default function QuizInterface({
 
     setIsSubmitting(true);
     try {
-      const result: QuizFeedback = await submitAnswer(
-        sessionId,
-        question.id,
-        answer
-      );
+      const raw: any = await submitAnswer({
+        session_id: sessionId,
+        question_id: question.id,
+        user_answer: answer,
+        hints_used: hintsRevealed,
+      });
+      // Normalize: backend returns "correct", frontend expects "is_correct"
+      const result: QuizFeedback = {
+        ...raw,
+        is_correct: raw.is_correct ?? raw.correct ?? false,
+      };
       setFeedback(result);
       setShowFeedback(true);
       if (result.is_correct) {
@@ -193,10 +207,11 @@ export default function QuizInterface({
                 {question.question_text}
               </p>
 
-              {/* Multiple choice */}
-              {question.question_type === 'multiple_choice' && (
+              {/* Multiple choice (also handles true_false stored as MCQ) */}
+              {(question.question_type === 'multiple_choice' ||
+                (question.question_type === 'true_false' && getOptionsArray(question.options).length > 0)) && (
                 <div className="space-y-3">
-                  {question.options?.map((option, i) => {
+                  {getOptionsArray(question.options).map((option, i) => {
                     const isSelected = selectedAnswer === option;
                     const showCorrectHighlight =
                       showFeedback && feedback && option === feedback.correct_answer;
@@ -228,8 +243,8 @@ export default function QuizInterface({
                 </div>
               )}
 
-              {/* True / False */}
-              {question.question_type === 'true_false' && (
+              {/* True / False (only when no options provided — pure true/false) */}
+              {question.question_type === 'true_false' && getOptionsArray(question.options).length === 0 && (
                 <div className="grid grid-cols-2 gap-4">
                   {['True', 'False'].map((val) => {
                     const isSelected = selectedAnswer === val;

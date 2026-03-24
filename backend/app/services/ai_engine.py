@@ -2,22 +2,23 @@ import json
 import time
 import logging
 from typing import Optional
-from anthropic import Anthropic
+from openai import OpenAI
 from app.config import settings
 
 logger = logging.getLogger(__name__)
 
-client = Anthropic(api_key=settings.ANTHROPIC_API_KEY)
+client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
-MODEL_OPUS = "claude-opus-4-20250514"
-MODEL_SONNET = "claude-sonnet-4-20250514"
-MODEL_HAIKU = "claude-haiku-4-5-20251001"
+# Map: Opus -> GPT-4o, Sonnet -> GPT-4o-mini, Haiku -> GPT-4o-mini
+MODEL_OPUS = "gpt-4o"
+MODEL_SONNET = "gpt-4o-mini"
+MODEL_HAIKU = "gpt-4o-mini"
 
 MAX_RETRIES = 3
 BASE_DELAY = 1.0
 
 
-def _call_claude(
+def _call_llm(
     model: str,
     system_prompt: str,
     user_message: str,
@@ -26,16 +27,18 @@ def _call_claude(
 ) -> str:
     for attempt in range(MAX_RETRIES):
         try:
-            response = client.messages.create(
+            response = client.chat.completions.create(
                 model=model,
                 max_tokens=max_tokens,
-                system=system_prompt,
-                messages=[{"role": "user", "content": user_message}],
                 temperature=temperature,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_message},
+                ],
             )
-            return response.content[0].text
+            return response.choices[0].message.content
         except Exception as e:
-            logger.error(f"Claude API error (attempt {attempt + 1}/{MAX_RETRIES}): {e}")
+            logger.error(f"OpenAI API error (attempt {attempt + 1}/{MAX_RETRIES}): {e}")
             if attempt < MAX_RETRIES - 1:
                 delay = BASE_DELAY * (2 ** attempt)
                 time.sleep(delay)
@@ -44,15 +47,18 @@ def _call_claude(
 
 
 def call_opus(system_prompt: str, user_message: str, max_tokens: int = 4096) -> str:
-    return _call_claude(MODEL_OPUS, system_prompt, user_message, max_tokens)
+    """Originally Claude Opus, now using GPT-4o."""
+    return _call_llm(MODEL_OPUS, system_prompt, user_message, max_tokens)
 
 
 def call_sonnet(system_prompt: str, user_message: str, max_tokens: int = 4096) -> str:
-    return _call_claude(MODEL_SONNET, system_prompt, user_message, max_tokens)
+    """Originally Claude Sonnet, now using GPT-4o-mini."""
+    return _call_llm(MODEL_SONNET, system_prompt, user_message, max_tokens)
 
 
 def call_haiku(system_prompt: str, user_message: str, max_tokens: int = 2048) -> str:
-    return _call_claude(MODEL_HAIKU, system_prompt, user_message, max_tokens)
+    """Originally Claude Haiku, now using GPT-4o-mini."""
+    return _call_llm(MODEL_HAIKU, system_prompt, user_message, max_tokens)
 
 
 def parse_json_response(response_text: str) -> dict:
