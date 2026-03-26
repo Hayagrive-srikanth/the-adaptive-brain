@@ -1,35 +1,13 @@
-# Dependencies
-node_modules/
-frontend/node_modules/
-
-# Environment files
-.env
-.env.local
-.env.production
-backend/.env
-frontend/.env.local
-
 # Python
+venv/
 __pycache__/
 *.pyc
-*.pyo
-backend/venv/
-*.egg-info/
+.env
 
-# Next.js
-frontend/.next/
-frontend/out/
-
-# IDE
+# Tooling
+.claude/
 .vscode/
-.idea/
 
-# OS
+# OS files
 .DS_Store
 Thumbs.db
-
-# Logs
-*.log
-
-# HunyuanOCR model (too large for git)
-HunyuanOCR/
